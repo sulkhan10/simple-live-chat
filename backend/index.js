@@ -16,11 +16,18 @@ const io = socketIo(server, {
 
 // MySQL connection
 const db = mysql.createConnection({
+  // host: "localhost",
+  // port: 8889,
+  // // port: 3306,
+  // user: "root",
+  // password: "",
+  // database: "websocket",
   host: "localhost",
-  port: 3306,
-  user: "root",
-  password: "",
-  database: "websocket",
+  port: 8889,
+
+  user: "adminlc",
+  password: "adminlc",
+  database: "chat_app",
 });
 
 db.connect((err) => {
@@ -39,6 +46,16 @@ io.on("connection", (socket) => {
   socket.on("joinRoom", (roomName) => {
     socket.join(roomName);
     console.log(`User ${socket.id} joined room: ${roomName}`);
+
+    const sql = "SELECT * FROM messages WHERE roomName = ?"; // Define your SQL query
+    db.query(sql, [roomName], (err, result) => {
+      if (err) {
+        console.error("Error fetching messages: " + err.message);
+      } else {
+        // Emit the result to the client
+        socket.emit("roomMessages", result);
+      }
+    });
   });
 
   // Handle chat messages in a specific room
@@ -52,15 +69,31 @@ io.on("connection", (socket) => {
           console.error("Error inserting message: " + err.message);
       } else {
           // Emit the message to all clients in the same room
-          io.to(roomName).emit("chat-message", data);
+            // io.to(roomName).emit("chat-message", data);
+          io.emit("chat-message", data);  
       }
   });
+  // const sql2 = "SELECT * FROM messages WHERE roomName = ?"; // Define your SQL query
 });
 
 
   // Handle typing event in a specific room
   socket.on("typing", (data, roomName) => {
     socket.to(roomName).emit("typing", data);
+  });
+
+  socket.on('fetchRoom', () => {
+    const sql = 'SELECT DISTINCT roomName FROM messages '; // Define your SQL query
+  
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error("Error fetching messages: " + err.message);
+        } else {
+            // Emit the result to the client
+            io.emit('roomData', result);
+        }
+    });
+
   });
 
   // Handle leaving a room
