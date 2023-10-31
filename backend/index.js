@@ -1,88 +1,80 @@
-import { useEffect, useState, useRef } from 'react';
-import io from 'socket.io-client';
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
+const mysql = require("mysql");
+const cors = require("cors");
 
-const socket = io('http://localhost:4000');
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:3000", // Replace with your client's origin URL
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  },
+});
 
-export default function Home() {
-  const [messages, setMessages] = useState([]);
-  const [username, setUsername] = useState('');
-  const [message, setMessage] = useState('');
-  const [roomName] = useState(''); // Set your room name here
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesRef = useRef(null);
+// MySQL connection
+const db = mysql.createConnection({
+  host: "localhost",
+  port: 3306,
+  user: "root",
+  password: "",
+  database: "websocket",
+});
 
-  useEffect(() => {
-    messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+db.connect((err) => {
+  if (err) {
+    console.error("Database connection failed: " + err.message);
+  } else {
+    console.log("Connected to the database");
+  }
+});
 
-    socket.on('chat-message', (data) => {
-      setMessages((prevMessages) => [...prevMessages, data]);
-    });
+// Socket.io setup
+io.on("connection", (socket) => {
+  console.log("A user connected  " + socket.id);
 
-    socket.on('typing', (data) => {
-      setIsTyping(data.typing);
-    });
-  }, []);
+  // Handle joining a room
+  socket.on("joinRoom", (roomName) => {
+    socket.join(roomName);
+    console.log(`User ${socket.id} joined room: ${roomName}`);
+  });
 
-  const handleSendMessage = () => {
-    if (username && message) {
-      socket.emit('message', { username, message, roomName });
-      setMessage('');
-    }
-  };
+  // Handle chat messages in a specific room
+  // Handle chat messages in a specific room
+  socket.on("message", (data) => {
+  const { username, message, roomName } = data; // Extract roomName from the data
+  console.log("Received message in room: " + message);
+  const sql = "INSERT INTO messages (username, message, roomName) VALUES (?, ?, ?)"; // Include roomName in the query
+  db.query(sql, [username, message, roomName], (err, result) => {
+      if (err) {
+          console.error("Error inserting message: " + err.message);
+      } else {
+          // Emit the message to all clients in the same room
+          io.to(roomName).emit("chat-message", data);
+      }
+  });
+});
 
-  const handleTyping = () => {
-    if (message) {
-      socket.emit('typing', { typing: true, username, roomName });
-    } else {
-      socket.emit('typing', { typing: false, username, roomName });
-    }
-  };
 
-  return (
-    <div className="flex h-screen bg-gray-300">
-      <div className="w-1/2 mx-auto mt-4 p-4 border border-gray-300 rounded shadow bg-gray-200">
-        <div className='flex justify-center items-center gap-4 mb-2'>
-          <p className="w-1/3 p-2 font-extrabold text-xl rounded text-cyan-800">
-            CHAT APP SUGOI
-          </p>
-          <input
-            type="text"
-            className="w-1/3 p-2 border border-gray-300 rounded text-cyan-600"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div className="h-[80vh] border border-gray-300 p-4 rounded overflow-y-auto" ref={messagesRef}>
-          {messages.map((msg, index) => (
-            <div key={index} className={`my-2 ${msg.username === username ? 'justify-end' : 'justify-start'}`}>
-              <div className={`rounded p-2 ${msg.username === username ? 'bg-green-100' : 'bg-blue-100'}`}>
-                <p className={`font-bold ${msg.username === username ? 'text-green-900' : 'text-blue-900'}`}>{msg.username}</p>
-                <p className={`${msg.username === username ? 'text-green-900' : 'text-blue-900'}`}>{msg.message}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 flex">
-          <input
-            type="text"
-            className="w-full p-2 border border-gray-300 rounded text-cyan-900"
-            placeholder="Message"
-            value={message}
-            onChange={(e) => {
-              setMessage(e.target.value);
-              handleTyping();
-            }}
-          />
-          <button
-            className="p-2 bg-blue-500 text-white rounded ml-2"
-            onClick={handleSendMessage}
-          >
-            Send
-          </button>
-        </div>
-        {isTyping && <p className="text-gray-500 mt-2">{username} is typing...</p>}
-      </div>
-    </div>
-  );
-}
+  // Handle typing event in a specific room
+  socket.on("typing", (data, roomName) => {
+    socket.to(roomName).emit("typing", data);
+  });
+
+  // Handle leaving a room
+  socket.on("leaveRoom", (roomName) => {
+    socket.leave(roomName);
+    console.log(`User ${socket.id} left room: ${roomName}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("A user disconnected");
+  });
+});
+
+server.listen(4000, () => {
+  console.log("Server is running on http://localhost:4000");
+});
+
