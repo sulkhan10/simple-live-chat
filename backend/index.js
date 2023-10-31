@@ -31,10 +31,10 @@ const io = socketIo(server, {
 // MySQL connection
 const db = mysql.createConnection({
   host: "localhost",
-  port: 8889,
+  port: 3306,
 
-  user: "adminlc",
-  password: "adminlc",
+  user: "root",
+  password: "",
   database: "chat_app",
 });
 
@@ -49,14 +49,18 @@ db.connect((err) => {
 // Socket.io setup
 io.on("connection", (socket) => {
   console.log("A user connected  " + socket.id);
+  socket.on('join', (data) => {
+    socket.join(data.room_id);
+    console.log("you're joining room id " + data.room_id);
+  });
 
   // Handle chat messages
   socket.on("message", (data) => {
     // console.log('Received message: ' + JSON.stringify(data));
-    console.log("Received message: " + data);
-    const { username, message } = data;
-    const sql = "INSERT INTO messages (username, message) VALUES (?, ?)";
-    db.query(sql, [username, message], (err, result) => {
+    console.log("Received message: " + {data});
+    const { username, message, room_id } = data;
+    const sql = "INSERT INTO messages (username, message, room_id) VALUES (?, ?, ?)";
+    db.query(sql, [username, message, room_id], (err, result) => {
       if (err) {
         console.error("Error inserting message: " + err.message);
       } else {
