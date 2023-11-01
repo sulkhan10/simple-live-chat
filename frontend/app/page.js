@@ -55,7 +55,7 @@ export default function Home() {
       <div className="w-3/4 mx-auto mt-4 p-4 border border-gray-300 rounded shadow bg-gray-200">
         <div className="flex justify-center items-center gap-4 mb-2">
           <p className="w-1/3 p-2 font-extrabold text-xl rounded text-cyan-800">
-            CHAT APP SUGOI
+            CHAT APP 
           </p>
           <input
             type="text"
