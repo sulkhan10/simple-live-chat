@@ -7,7 +7,7 @@ const socket = io("http://localhost:4000");
 export default function Home() {
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
-  const [room, setRoom] = useState([1, 2]);
+  const [room, setRoom] = useState([1,2]);
   const [roomName] = useState("satu");
   const [roomMessages, setRoomMessages] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -17,6 +17,12 @@ export default function Home() {
   useEffect(() => {
     messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     // socket.emit("fetchRoom", null);
+
+    socket.on("connected", (data) => {
+      console.log(data, "connected");
+      setRoom(data)
+    })
+
     socket.on("roomData", async (data) => {
       console.log(data, "roomData");
       await setRoom(data);
@@ -128,9 +134,9 @@ export default function Home() {
             ))}
           </div>
         </div>
-        {room_id === currentRoomId && ( // Conditionally render based on room_id
+        {room_id === room && ( // Conditionally render based on room_id
           <div id='chat_screen' className="h-[80vh] border border-gray-300 p-4 rounded overflow-y-auto" ref={messagesRef}>
-            {messages.map((msg, index) => (
+            {message.map((msg, index) => (
               <div key={index} className={`my-2 ${msg.username === username ? 'text-right' : 'text-left'}`}>
                 <div className={`rounded p-2 bg-${msg.username === username ? 'green' : 'blue'}-100`}>
                   <p className={`font-bold text-gray-900`}>{msg.username}</p>
