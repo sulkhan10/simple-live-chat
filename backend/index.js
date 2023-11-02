@@ -41,6 +41,16 @@ db.connect((err) => {
 // Socket.io setup
 io.on("connection", (socket) => {
   console.log("A user connected  " + socket.id);
+
+  const sql = "SELECT * FROM roomChat";
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Couldn't fetch room chat data from database", err);
+    } else {
+      socket.emit("connected", results);
+    }
+  }); 
+
   socket.on('join', (data) => {
     socket.join(data.room_id);
     console.log("you're joining room id " + data.room_id);

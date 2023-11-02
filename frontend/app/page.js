@@ -7,7 +7,8 @@ const socket = io("http://localhost:4000");
 export default function Home() {
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
-  const [room, setRoom] = useState([1, 2]);
+  // const [room, setRoom] = useState([1, 2]);
+  const [room, setRoom] = useState([]);
   const [roomName] = useState("satu");
   const [roomMessages, setRoomMessages] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -17,19 +18,26 @@ export default function Home() {
   useEffect(() => {
     messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     // socket.emit("fetchRoom", null);
+
+    socket.on("connected", async (results) => {
+      console.log(results, "room connected");
+      setRoom(results);
+    })
+
     socket.on("roomData", async (data) => {
       console.log(data, "roomData");
       await setRoom(data);
       await console.log(room, "room");
     });
     socket.on("chat-message", (data) => {
-      // console.log(data, "chat-message cihuauaha");
-      console.log(data.selectedRoom, "selectedRoom");
-      console.log(selectedRoom, "selectedRoom apasi");
-      console.log(roomMessages, "roomMessages");
-      console.log(data, "data");
-      console.log(roomMessages, "roomMessages");
+      // // console.log(data, "chat-message cihuauaha");
+      // console.log(data.selectedRoom, "selectedRoom");
+      // console.log(selectedRoom, "selectedRoom apasi");
+      // console.log(roomMessages, "roomMessages");
+      // console.log(data, "data");
+      // console.log(roomMessages, "roomMessages");
       if (data.selectedRoom == selectedRoom) {
+        setRoomMessages((prevMessages) => [...prevMessages, data]);
         // let prevdata = roomMessages;
         // console.log(prevdata, "prevdata");
         // prevdata.push(data);
@@ -78,14 +86,14 @@ export default function Home() {
                 } p-2 font-extrabold text-lg rounded text-cyan-800 cursor-pointer hover:bg-green-300 ease-in-out w-full  `}
                 onClick={(e) => {
                   e.preventDefault();
-                  setSelectedRoom(data);
-                  socket.emit("joinRoom", data);
-                  console.log(data, "clicked");
+                  setSelectedRoom(data.roomChat_id);
+                  socket.emit("joinRoom", data.roomChat_id);
+                  console.log(data.roomChat_name, "clicked");
                   // socket.emit("fetchRoom", null);
                   // console.log(data.roomName, "roomName");
                 }}
               >
-                {data}
+                {data.roomChat_name}
               </p>
             ))}
           </div>
@@ -93,35 +101,35 @@ export default function Home() {
             className="h-[80vh] w-2/3 border-4 border-gray-300 p-4 rounded overflow-y-auto"
             ref={messagesRef}
           >
-            {roomMessages.map((msg, index) => (
+            {roomMessages.map((roomMessage, index) => (
               <div
                 key={index}
                 className={`my-2 ${
-                  msg.username === username ? "justify-end text-right" : "justify-start"
+                  roomMessage.username === username ? "justify-end text-right" : "justify-start"
                 }`}
               >
                 <div
                   className={`rounded p-2 ${
-                    msg.username === username ? "bg-green-100 text-right" : "bg-blue-100"
+                    roomMessage.username === username ? "bg-green-100 text-right" : "bg-blue-100"
                   }`}
                 >
                   <p
                     className={`font-bold ${
-                      msg.username === username
+                      roomMessage.username === username
                         ? "text-green-900"
                         : "text-blue-900"
                     }`}
                   >
-                    {msg.username}
+                    {roomMessage.username}
                   </p>
                   <p
                     className={`${
-                      msg.username === username
+                      roomMessage.username === username
                         ? "text-green-900"
                         : "text-blue-900"
                     }`}
                   >
-                    {msg.message}
+                    {roomMessage.message}
                   </p>
                 </div>
               </div>
