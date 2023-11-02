@@ -61,7 +61,7 @@ io.on("connection", (socket) => {
     socket.join(roomName);
     console.log(`User ${socket.id} joined room: ${roomName}`);
 
-    const sql = "SELECT * FROM messages WHERE roomName = ?"; // Define your SQL query
+    const sql = "SELECT DISTINCT * FROM messages WHERE roomName = ?"; // Define your SQL query
     db.query(sql, [roomName], (err, result) => {
       if (err) {
         console.error("Error fetching messages: " + err.message);
@@ -84,7 +84,7 @@ io.on("connection", (socket) => {
       } else {
           // Emit the message to all clients in the same room
             // io.to(roomName).emit("chat-message", data);
-          io.emit("chat-message", data);  
+          io.to(data.roomName).emit("chat-message", data);  
       }
   });
   // const sql2 = "SELECT * FROM messages WHERE roomName = ?"; // Define your SQL query
@@ -96,19 +96,19 @@ io.on("connection", (socket) => {
     socket.to(roomName).emit("typing", data);
   });
 
-  socket.on('fetchRoom', () => {
-    const sql = 'SELECT DISTINCT roomName FROM messages '; // Define your SQL query
+  // socket.on('fetchRoom', () => {
+  //   const sql = 'SELECT DISTINCT roomName FROM messages '; // Define your SQL query
   
-    db.query(sql, (err, result) => {
-        if (err) {
-            console.error("Error fetching messages: " + err.message);
-        } else {
-            // Emit the result to the client
-            io.emit('roomData', result);
-        }
-    });
+  //   db.query(sql, (err, result) => {
+  //       if (err) {
+  //           console.error("Error fetching messages: " + err.message);
+  //       } else {
+  //           // Emit the result to the client
+  //           io.emit('roomData', result);
+  //       }
+  //   });
 
-  });
+  // });
 
   // Handle leaving a room
   socket.on("leaveRoom", (roomName) => {

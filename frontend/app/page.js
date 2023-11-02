@@ -47,7 +47,7 @@ export default function Home() {
     });
     socket.on("roomMessages", (data) => {
       console.log(data, "roomMessages");
-      setRoomMessages(data);
+      // setRoomMessages(data);
     });
   }, [roomName]);
 
@@ -136,7 +136,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-        {room_id === room && ( // Conditionally render based on room_id
+        {/* {room_id === room && ( // Conditionally render based on room_id
           <div id='chat_screen' className="h-[80vh] border border-gray-300 p-4 rounded overflow-y-auto" ref={messagesRef}>
             {messages.map((msg, index) => (
               <div key={index} className={`my-2 ${msg.username === username ? 'text-right' : 'text-left'}`}>
@@ -147,7 +147,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-        )}
+        )} */}
         <div className="mt-4 flex">
           <input
             type="text"
