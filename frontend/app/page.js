@@ -12,44 +12,47 @@ export default function Home() {
   const [roomName] = useState("satu");
   const [roomMessages, setRoomMessages] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [newMessage, setNewMessage] = useState([]);
   const messagesRef = useRef(null);
-  let room_id = "1";
+  // let room_id = "1";
 
   useEffect(() => {
     messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     // socket.emit("fetchRoom", null);
 
-    socket.on("connected", async (results) => {
-      console.log(results, "room connected");
-      setRoom(results);
-    })
-
-    socket.on("roomData", async (data) => {
-      console.log(data, "roomData");
-      await setRoom(data);
-      await console.log(room, "room");
-    });
-    socket.on("chat-message", (data) => {
-      // // console.log(data, "chat-message cihuauaha");
-      // console.log(data.selectedRoom, "selectedRoom");
-      // console.log(selectedRoom, "selectedRoom apasi");
-      // console.log(roomMessages, "roomMessages");
-      // console.log(data, "data");
-      // console.log(roomMessages, "roomMessages");
-      if (data.selectedRoom == selectedRoom) {
-        setRoomMessages((prevMessages) => [...prevMessages, data]);
-        // let prevdata = roomMessages;
-        // console.log(prevdata, "prevdata");
-        // prevdata.push(data);
-        // setRoomMessages(prevdata);
-      // socket.emit("joinRoom", selectedRoom);
-      }
-    });
-    socket.on("roomMessages", (data) => {
-      console.log(data, "roomMessages");
-      // setRoomMessages(data);
-    });
   }, [roomName]);
+
+  socket.on("connected", async (results) => {
+    // console.log(results, "room connected");
+    setRoom(results);
+  })
+
+  // socket.on("roomData", async (data) => {
+  //   console.log(data, "roomData");
+  //   await setRoom(data);
+  //   await console.log(room, "room");
+  // });
+  socket.on("roomMessages", (data) => {
+    // console.log(data, "roomMessages");
+    setRoomMessages(data);
+  });
+
+  socket.on("chat-message", (data) => {
+    // // console.log(data, "chat-message cihuauaha");
+    // console.log(data.selectedRoom, "selectedRoom");
+    // console.log(selectedRoom, "selectedRoom apasi");
+    // console.log(roomMessages, "roomMessages");
+    // console.log(data, "data");
+    // console.log(roomMessages, "roomMessages");
+    if (data.selectedRoom == selectedRoom) {
+      setRoomMessages((prevMessages) => [...prevMessages, data]);
+      // let prevdata = roomMessages;
+      // console.log(prevdata, "prevdata");
+      // prevdata.push(data);
+      // setRoomMessages(prevdata);
+    // socket.emit("joinRoom", selectedRoom);
+    }
+  });
 
   const handleSendMessage = () => {
     if (username && message) {

@@ -40,6 +40,7 @@ db.connect((err) => {
 
 // Socket.io setup
 io.on("connection", (socket) => {
+  socket.removeAllListeners()
   console.log("A user connected  " + socket.id);
 
   const sql = "SELECT * FROM roomChat";
@@ -50,11 +51,6 @@ io.on("connection", (socket) => {
       socket.emit("connected", results);
     }
   }); 
-
-  socket.on('join', (data) => {
-    socket.join(data.room_id);
-    console.log("you're joining room id " + data.room_id);
-  });
 
   // Handle joining a room
   socket.on("joinRoom", (roomName) => {
@@ -75,26 +71,30 @@ io.on("connection", (socket) => {
   // Handle chat messages in a specific room
   // Handle chat messages in a specific room
   socket.on("message", (data) => {
-  const { username, message, roomName } = data; // Extract roomName from the data
-  console.log("Received message in room: " + message);
-  const sql = "INSERT INTO messages (username, message, roomName) VALUES (?, ?, ?)"; // Include roomName in the query
-  db.query(sql, [username, message, roomName], (err, result) => {
-      if (err) {
-          console.error("Error inserting message: " + err.message);
-      } else {
-          // Emit the message to all clients in the same room
-            // io.to(roomName).emit("chat-message", data);
-          io.to(data.roomName).emit("chat-message", data);  
-      }
+    const { username, message, roomName } = data; // Extract roomName from the data
+    console.log("Received message in room: " + message);
+    const sql = "INSERT INTO messages (username, message, roomName) VALUES (?, ?, ?)"; // Include roomName in the query
+    db.query(sql, [username, message, roomName], (err, result) => {
+        if (err) {
+            console.error("Error inserting message: " + err.message);
+        } else {
+            // Emit the message to all clients in the same room
+              // io.to(roomName).emit("chat-message", data);
+            io.to(data.roomName).emit("chat-message", data);  
+        }
+    });
+    // const sql2 = "SELECT * FROM messages WHERE roomName = ?"; // Define your SQL query
   });
-  // const sql2 = "SELECT * FROM messages WHERE roomName = ?"; // Define your SQL query
-});
 
+  // socket.on('join', (data) => {
+  //   socket.join(data.room_id);
+  //   console.log("you're joining room id " + data.room_id);
+  // });
 
   // Handle typing event in a specific room
-  socket.on("typing", (data, roomName) => {
-    socket.to(roomName).emit("typing", data);
-  });
+  // socket.on("typing", (data, roomName) => {
+  //   socket.to(roomName).emit("typing", data);
+  // });
 
   // socket.on('fetchRoom', () => {
   //   const sql = 'SELECT DISTINCT roomName FROM messages '; // Define your SQL query
