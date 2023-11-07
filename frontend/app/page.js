@@ -7,14 +7,11 @@ const socket = io("http://localhost:4000");
 export default function Home() {
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
-  // const [room, setRoom] = useState([1, 2]);
-  const [room, setRoom] = useState([]);
+  const [roomList, setRoomList] = useState([]);
   const [roomName] = useState("satu");
   const [roomMessages, setRoomMessages] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [newMessage, setNewMessage] = useState([]);
   const messagesRef = useRef(null);
-  // let room_id = "1";
 
   useEffect(() => {
     messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
@@ -23,8 +20,7 @@ export default function Home() {
   }, [roomName]);
 
   socket.on("connected", async (results) => {
-    // console.log(results, "room connected");
-    setRoom(results);
+    setRoomList(results);
   })
 
   // socket.on("roomData", async (data) => {
@@ -38,19 +34,8 @@ export default function Home() {
   });
 
   socket.on("chat-message", (data) => {
-    // // console.log(data, "chat-message cihuauaha");
-    // console.log(data.selectedRoom, "selectedRoom");
-    // console.log(selectedRoom, "selectedRoom apasi");
-    // console.log(roomMessages, "roomMessages");
-    // console.log(data, "data");
-    // console.log(roomMessages, "roomMessages");
     if (data.selectedRoom == selectedRoom) {
       setRoomMessages((prevMessages) => [...prevMessages, data]);
-      // let prevdata = roomMessages;
-      // console.log(prevdata, "prevdata");
-      // prevdata.push(data);
-      // setRoomMessages(prevdata);
-    // socket.emit("joinRoom", selectedRoom);
     }
   });
 
@@ -82,7 +67,7 @@ export default function Home() {
             className="h-[80vh] w-1/3  border-4 border-gray-500 p-4 rounded overflow-y-auto"
             ref={messagesRef}
           >
-            {room.map((data, index) => (
+            {roomList.map((data, index) => (
               <p
                 className={`${
                   data == selectedRoom ? "bg-green-200" : ""
@@ -139,7 +124,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-        {/* {room_id === room && ( // Conditionally render based on room_id
+        {/* {room_id === roomList && ( // Conditionally render based on room_id
           <div id='chat_screen' className="h-[80vh] border border-gray-300 p-4 rounded overflow-y-auto" ref={messagesRef}>
             {messages.map((msg, index) => (
               <div key={index} className={`my-2 ${msg.username === username ? 'text-right' : 'text-left'}`}>
