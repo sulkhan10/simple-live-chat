@@ -16,28 +16,24 @@ export default function Home() {
   useEffect(() => {
     messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     // socket.emit("fetchRoom", null);
-
-  }, [roomName]);
+  }, [roomMessages]);
 
   socket.on("connected", async (results) => {
+    console.log(results, "connected events");
     setRoomList(results);
   })
 
-  // socket.on("roomData", async (data) => {
-  //   console.log(data, "roomData");
-  //   await setRoom(data);
-  //   await console.log(room, "room");
-  // });
   socket.on("roomMessages", (data) => {
     // console.log(data, "roomMessages");
+    setRoomMessages((prevMessages) => [...prevMessages, data]);
     setRoomMessages(data);
   });
 
-  socket.on("chat-message", (data) => {
-    if (data.selectedRoom == selectedRoom) {
-      setRoomMessages((prevMessages) => [...prevMessages, data]);
-    }
-  });
+  // socket.on("chat-message", (data) => {
+  //   if (data.selectedRoom == selectedRoom) {
+  //     setRoomMessages((prevMessages) => [...prevMessages, data]);
+  //   }
+  // });
 
   const handleSendMessage = () => {
     if (username && message) {
@@ -70,18 +66,18 @@ export default function Home() {
             {roomList.map((data, index) => (
               <p
                 className={`${
-                  data == selectedRoom ? "bg-green-200" : ""
+                  data.lokasi_lemasmil_id == selectedRoom ? "bg-green-200" : ""
                 } p-2 font-extrabold text-lg rounded text-cyan-800 cursor-pointer hover:bg-green-300 ease-in-out w-full  `}
                 onClick={(e) => {
                   e.preventDefault();
-                  setSelectedRoom(data.roomChat_id);
-                  socket.emit("joinRoom", data.roomChat_id);
-                  console.log(data.roomChat_name, "clicked");
+                  setSelectedRoom(data.lokasi_lemasmil_id);
+                  socket.emit("joinRoom", data.lokasi_lemasmil_id);
+                  console.log(data.nama_lokasi_lemasmil, "clicked");
                   // socket.emit("fetchRoom", null);
                   // console.log(data.roomName, "roomName");
                 }}
               >
-                {data.roomChat_name}
+                {data.nama_lokasi_lemasmil}
               </p>
             ))}
           </div>

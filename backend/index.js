@@ -3,6 +3,7 @@ const http = require("http");
 const socketIo = require("socket.io");
 const mysql = require("mysql");
 const cors = require("cors");
+require('dotenv').config()
 
 const app = express();
 const server = http.createServer(app);
@@ -16,18 +17,10 @@ const io = socketIo(server, {
 
 // MySQL connection
 const db = mysql.createConnection({
-  // host: "localhost",
-  // port: 8889,
-  // // port: 3306,
-  // user: "root",
-  // password: "",
-  // database: "websocket",
-  host: "localhost",
-  port: 3306,
-
-  user: "root",
-  password: "",
-  database: "chat_app",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB,
 });
 
 db.connect((err) => {
@@ -43,11 +36,13 @@ io.on("connection", (socket) => {
   socket.removeAllListeners()
   console.log("A user connected  " + socket.id);
 
-  const sql = "SELECT * FROM roomChat";
+  const sql = "SELECT lokasi_lemasmil_id, nama_lokasi_lemasmil FROM lokasi_lemasmil";
+  // const sql = "SELECT * FROM roomchat";
   db.query(sql, (err, results) => {
     if (err) {
       console.error("Couldn't fetch room chat data from database", err);
     } else {
+      // console.log(results);
       socket.emit("connected", results);
     }
   }); 
@@ -79,34 +74,14 @@ io.on("connection", (socket) => {
         } else {
             // Emit the message to all clients in the same room
               // io.to(roomName).emit("chat-message", data);
-            io.to(data.roomName).emit("chat-message", data);  
+            // io.to(data.roomName).emit("chat-message", data);  
         }
     });
-    // const sql2 = "SELECT * FROM messages WHERE roomName = ?"; // Define your SQL query
   });
-
-  // socket.on('join', (data) => {
-  //   socket.join(data.room_id);
-  //   console.log("you're joining room id " + data.room_id);
-  // });
 
   // Handle typing event in a specific room
   // socket.on("typing", (data, roomName) => {
   //   socket.to(roomName).emit("typing", data);
-  // });
-
-  // socket.on('fetchRoom', () => {
-  //   const sql = 'SELECT DISTINCT roomName FROM messages '; // Define your SQL query
-  
-  //   db.query(sql, (err, result) => {
-  //       if (err) {
-  //           console.error("Error fetching messages: " + err.message);
-  //       } else {
-  //           // Emit the result to the client
-  //           io.emit('roomData', result);
-  //       }
-  //   });
-
   // });
 
   // Handle leaving a room
