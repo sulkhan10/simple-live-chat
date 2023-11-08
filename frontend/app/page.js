@@ -8,7 +8,6 @@ export default function Home() {
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
   const [roomList, setRoomList] = useState([]);
-  const [roomName] = useState("satu");
   const [roomMessages, setRoomMessages] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const messagesRef = useRef(null);
@@ -16,30 +15,32 @@ export default function Home() {
   useEffect(() => {
     messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     // socket.emit("fetchRoom", null);
-  }, [roomMessages]);
+    socket.on("chat-message", (data) => {
+      // setRoomMessages(data);
+      if (data.roomName == selectedRoom) {
+        console.log(data, "chat-message");
+        setRoomMessages((prevMessages) => [...prevMessages, data]);
+      }
+    });
+  }, [selectedRoom]);
 
   socket.on("connected", async (results) => {
-    console.log(results, "connected events");
+    // console.log(results, "connected events");
     setRoomList(results);
   })
 
   socket.on("roomMessages", (data) => {
     // console.log(data, "roomMessages");
-    setRoomMessages((prevMessages) => [...prevMessages, data]);
     setRoomMessages(data);
+    // setRoomMessages((prevMessages) => [...prevMessages, data]);
   });
 
-  // socket.on("chat-message", (data) => {
-  //   if (data.selectedRoom == selectedRoom) {
-  //     setRoomMessages((prevMessages) => [...prevMessages, data]);
-  //   }
-  // });
+
 
   const handleSendMessage = () => {
     if (username && message) {
       socket.emit("message", { username, message, roomName: selectedRoom });
       setMessage("");
-      socket.emit("joinRoom", selectedRoom);
     }
   };
 
@@ -71,6 +72,7 @@ export default function Home() {
                 onClick={(e) => {
                   e.preventDefault();
                   setSelectedRoom(data.lokasi_lemasmil_id);
+                  // socket.emit("leaveRoom", data.lokasi_lemasmil_id)
                   socket.emit("joinRoom", data.lokasi_lemasmil_id);
                   console.log(data.nama_lokasi_lemasmil, "clicked");
                   // socket.emit("fetchRoom", null);

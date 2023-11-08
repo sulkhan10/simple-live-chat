@@ -50,7 +50,7 @@ io.on("connection", (socket) => {
   // Handle joining a room
   socket.on("joinRoom", (roomName) => {
     socket.join(roomName);
-    // console.log(`User ${socket.id} joined room: ${roomName}`);
+    // console.log(`User ${socket.id} joined room: ${roomName.roomName}`);
 
     const sql = "SELECT DISTINCT * FROM messages WHERE roomName = ?"; // Define your SQL query
     db.query(sql, [roomName], (err, result) => {
@@ -73,10 +73,9 @@ io.on("connection", (socket) => {
             console.error("Error inserting message: " + err.message);
         } else {
             // Emit the message to all clients in the same room
-              // io.to(roomName).emit("chat-message", data);
-            // io.to(data.roomName).emit("chat-message", data);  
         }
     });
+    io.to(data.roomName).emit("chat-message", data);  
   });
 
   // Handle typing event in a specific room
