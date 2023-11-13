@@ -3,13 +3,16 @@ const http = require("http");
 const socketIo = require("socket.io");
 const mysql = require("mysql");
 const cors = require("cors");
-require('dotenv').config()
+const { v4: uuidV4 } = require("uuid");
+const md5 = require("md5");
+const axios = require("axios").default;
+require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000", // Replace with your client's origin URL
+    origin: "*", // Replace with your client's origin URL
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"],
   },
@@ -33,10 +36,11 @@ db.connect((err) => {
 
 // Socket.io setup
 io.on("connection", (socket) => {
-  socket.removeAllListeners()
+  socket.removeAllListeners();
   console.log("A user connected  " + socket.id);
 
-  const sql = "SELECT lokasi_lemasmil_id, nama_lokasi_lemasmil FROM lokasi_lemasmil";
+  const sql =
+    "SELECT lokasi_lemasmil_id, nama_lokasi_lemasmil FROM lokasi_lemasmil";
   // const sql = "SELECT * FROM roomchat";
   db.query(sql, (err, results) => {
     if (err) {
@@ -45,7 +49,7 @@ io.on("connection", (socket) => {
       // console.log(results);
       socket.emit("connected", results);
     }
-  }); 
+  });
 
   // Handle joining a room
   socket.on("joinRoom", (roomName) => {
@@ -65,17 +69,50 @@ io.on("connection", (socket) => {
 
   // Handle chat messages in a specific room
   socket.on("message", (data) => {
-    const { username, message, roomName } = data; // Extract roomName from the data
-    console.log("Received message in room: " + message);
-    const sql = "INSERT INTO messages (username, message, roomName) VALUES (?, ?, ?)"; // Include roomName in the query
-    db.query(sql, [username, message, roomName], (err, result) => {
-        if (err) {
-            console.error("Error inserting message: " + err.message);
-        } else {
-            // Emit the message to all clients in the same room
-        }
-    });
-    io.to(data.roomName).emit("chat-message", data);  
+    const { username, message, roomName, file, fileName } = data; // Extract roomName from the data
+    const message_id = uuidV4();
+    console.log(typeof file);
+    if (typeof file === "undefined") {
+      console.log("insert to db");
+      const sql =
+        "INSERT INTO messages (id, username, message, roomName) VALUES (?, ?, ?)"; // Include roomName in the query
+      // db.query(sql, [messageId, username, message, roomName], (err, result) => {
+      //   if (err) {
+      //     console.error("Error inserting message: " + err.message);
+      //   } else {
+      //     // Emit the message to all clients in the same room
+      //   }
+      // });
+      io.to(data.roomName).emit("chat-message", data);
+    } else {
+      const messages_file_id = uuidV4();
+      const extension = "." + fileName.split(".").pop();
+      const fileBase64 = Buffer.from(file).toString("base64");
+      const serverPath = process.env.SAVE_PATH + md5(fileName) + extension;
+      const dbPath = process.env.DB_PATH + md5(fileName) + extension;
+      // console.log(serverPath);
+      axios
+        .post(
+          "https://dev.transforme.co.id/siram_admin_api/siram_api/message_file_upload.php",
+          {
+            messages_file_id: messages_file_id,
+            message_id: message_id,
+            username: username,
+            message: message,
+            roomName: roomName,
+            fileBase64: fileBase64,
+            fileName: fileName,
+            serverPath: serverPath,
+            dbPath: dbPath,
+          }
+        )
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    }
   });
 
   // Handle typing event in a specific room
@@ -97,4 +134,3 @@ io.on("connection", (socket) => {
 server.listen(4000, () => {
   console.log("Server is running on http://localhost:4000");
 });
-

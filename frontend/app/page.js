@@ -7,6 +7,7 @@ const socket = io("http://localhost:4000");
 export default function Home() {
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
+  const [file, setFile] = useState(null);
   const [roomList, setRoomList] = useState([]);
   const [roomMessages, setRoomMessages] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -27,7 +28,7 @@ export default function Home() {
   socket.on("connected", async (results) => {
     // console.log(results, "connected events");
     setRoomList(results);
-  })
+  });
 
   socket.on("roomMessages", (data) => {
     // console.log(data, "roomMessages");
@@ -35,12 +36,22 @@ export default function Home() {
     // setRoomMessages((prevMessages) => [...prevMessages, data]);
   });
 
-
-
   const handleSendMessage = () => {
     if (username && message) {
-      socket.emit("message", { username, message, roomName: selectedRoom });
+      if (file) {
+        const fileName = file.name;
+        socket.emit("message", {
+          username,
+          message,
+          file,
+          fileName,
+          roomName: selectedRoom,
+        });
+      } else {
+        socket.emit("message", { username, message, roomName: selectedRoom });
+      }
       setMessage("");
+      setFile("");
     }
   };
 
@@ -91,12 +102,16 @@ export default function Home() {
               <div
                 key={index}
                 className={`my-2 ${
-                  roomMessage.username === username ? "justify-end text-right" : "justify-start"
+                  roomMessage.username === username
+                    ? "justify-end text-right"
+                    : "justify-start"
                 }`}
               >
                 <div
                   className={`rounded p-2 ${
-                    roomMessage.username === username ? "bg-green-100 text-right" : "bg-blue-100"
+                    roomMessage.username === username
+                      ? "bg-green-100 text-right"
+                      : "bg-blue-100"
                   }`}
                 >
                   <p
@@ -141,6 +156,12 @@ export default function Home() {
             placeholder="Message"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+          />
+          <input
+            type="file"
+            className="p-2 bg-blue-500 text-white rounded ml-2"
+            onChange={(e) => setFile(e.target.files[0])}
+            // onClick={handleSendMessage}
           />
           <button
             className="p-2 bg-blue-500 text-white rounded ml-2"
