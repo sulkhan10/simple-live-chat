@@ -76,13 +76,13 @@ io.on("connection", (socket) => {
       console.log("insert to db");
       const sql =
         "INSERT INTO messages (id, username, message, roomName) VALUES (?, ?, ?)"; // Include roomName in the query
-      // db.query(sql, [messageId, username, message, roomName], (err, result) => {
-      //   if (err) {
-      //     console.error("Error inserting message: " + err.message);
-      //   } else {
-      //     // Emit the message to all clients in the same room
-      //   }
-      // });
+      db.query(sql, [messageId, username, message, roomName], (err, result) => {
+        if (err) {
+          console.error("Error inserting message: " + err.message);
+        } else {
+          // Emit the message to all clients in the same room
+        }
+      });
       io.to(data.roomName).emit("chat-message", data);
     } else {
       const messages_file_id = uuidV4();
