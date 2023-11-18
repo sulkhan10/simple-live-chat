@@ -6,6 +6,7 @@ const cors = require("cors");
 const { v4: uuidV4 } = require("uuid");
 const md5 = require("md5");
 const axios = require("axios").default;
+let port = process.env.PORT || 4000;
 require("dotenv").config();
 
 const app = express();
@@ -135,6 +136,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(4000, () => {
-  console.log("Server is running on port 4000");
+server.listen(port, () => {
+  console.log("Server is running on port " + port + "...");
 });
